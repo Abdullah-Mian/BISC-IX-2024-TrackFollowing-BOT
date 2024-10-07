@@ -1,0 +1,501 @@
+Turning Right
+Last command: R, Run time: 750 ms
+
+Moving Forward
+Last command: F, Run time: 1494 ms
+Turning Left
+Last command: L, Run time: 782 ms
+Moving Forward
+Last command: F, Run time: 1169 ms
+Turning Right
+Last command: R, Run time: 726 ms
+Moving Forward
+Last command: F, Run time: 1240 ms
+Turning Right
+Last command: R, Run time: 726 ms
+Turning Right
+Last command: R, Run time: 726 ms
+Moving Forward
+Last command: F, Run time: 1239 ms
+Turning Right
+Last command: R, Run time: 726 ms
+Moving Forward
+Last command: F, Run time: 989 ms
+Turning Right
+Last command: R, Run time: 726 ms
+Rotating Clockwise
+Last command: C, Run time: 1492 ms
+Turning Left
+Last command: L, Run time: 762 ms
+Moving Forward
+Last command: F, Run time: 2100 ms
+Turning Left
+Last command: L, Run time: 732 ms
+Moving Forward
+Last command: F, Run time: 1942 ms
+
+
+
+Moving Forward
+Last command: F, Run time:  ms 
+Turning Left
+Last command: L, Run time: 864 ms
+Turning Right
+Last command: R, Run time: 711 ms
+
+
+
+
+#include <ESP32Servo.h>
+
+// Define motor pins
+#define motorA_forward 23
+#define motorA_backward 22
+#define motorB_forward 19
+#define motorB_backward 21
+
+// Define servo motor pins
+#define servo1Pin 5   // Pin for Servo 1
+#define servo2Pin 18  // Pin for Servo 2
+
+// Define a struct to hold command and value
+struct Command {
+  char action;
+  int value;  // Can be duration or angle for servos
+};
+
+// Array of commands with grab/release actions for servos and motor commands
+Command commands[] = {
+  { 'G', 180 },   // Grab (servo angle = 180)
+  { 'S', 0 },     // Release (servo angle = 0)
+  { 'G', 180 },   // Grab (servo angle = 180)
+  { 'S', 0 },     // Release (servo angle = 0)
+  // Commented out motor commands
+  // { 'F', 1494 },  // Move Forward
+  // { 'L', 790 },   // Turn Left (using mean value)
+  // { 'F', 1169 },  // Move Forward
+  // { 'R', 790 },   // Turn Right (using mean value)
+  // { 'R', 810 },   // Turn Right
+  // { 'F', 1239 },  // Move Forward
+  // { 'R', 790 },   // Turn Right
+  // { 'F', 989 },   // Move Forward
+  // { 'R', 790 },   // Turn Right
+  // { 'C', 1492 },  // Rotate Clockwise
+  // { 'L', 790 },   // Turn Left
+  // { 'F', 2100 },  // Move Forward
+  // { 'L', 864 },   // Turn Left
+  // { 'F', 1942 },  // Move Forward
+};
+
+// Create Servo objects
+Servo servo1;
+Servo servo2;
+
+void setup() {
+  Serial.begin(115200);  // Start serial communication
+
+  // Set up motor pins
+  pinMode(motorA_forward, OUTPUT);
+  pinMode(motorA_backward, OUTPUT);
+  pinMode(motorB_forward, OUTPUT);
+  pinMode(motorB_backward, OUTPUT);
+
+  // Attach servos
+  servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+
+  // Check if servos are at zero position on start
+  checkServoPosition(servo1, 1);
+  checkServoPosition(servo2, 2);
+
+  Serial.println("Both servos are at zero position.");
+}
+
+void loop() {
+  // Execute each command in the array
+  delay(1000);
+  for (const Command& cmd : commands) {
+    executeCommand(cmd.action, cmd.value);
+  }
+
+  // After executing all commands, stop the program
+  while (true) {
+    stopMotors();
+    delay(1000);
+  }
+}
+
+void executeCommand(char commandChar, int value) {
+  switch (commandChar) {
+    case 'G':
+      grab(value);
+      delay(5000);
+      break;
+    case 'S':
+      releaseServo(value);
+      delay(1000);
+      break;
+    case 'F':
+      moveForward(value);
+      delay(1500);
+      break;
+    case 'L':
+      turnLeft(value);
+      delay(1500);
+      break;
+    case 'R':
+      turnRight(value);
+      delay(1500);
+      break;
+    case 'C':
+      rotateClockwise(value);
+      delay(1500);
+      break;
+    case 'A':
+      rotateAntiClockwise(value);
+      delay(1500);
+      break;
+    default:
+      stopMotors();
+      delay(1500);
+      break;
+  }
+}
+
+void checkServoPosition(Servo &servo, int servoNumber) {
+  int currentPos = servo.read();  // Get current position of servo
+  if (servoNumber == 1) {
+    if (currentPos != 0) {
+      Serial.println("Servo 1 is not at zero position, resetting to zero...");
+      servo.write(0);  // Move to zero position if not already there
+      delay(1000);  // Wait for servo to move
+    } else {
+      Serial.println("Servo 1 is already at zero position.");
+    }
+  } else if (servoNumber == 2) {
+    if (currentPos != 180) {
+      Serial.println("Servo 2 is not at zero position, resetting to zero...");
+      servo.write(180);  // Move to inverted zero position if not already there
+      delay(1000);  // Wait for servo to move
+    } else {
+      Serial.println("Servo 2 is already at zero position.");
+    }
+  }
+}
+
+void grab(int angle) {
+  Serial.println("Grabbing...");
+  servo1.write(angle);         // Grab with servo 1
+  servo2.write(180 - angle);   // Inverted grab with servo 2
+  delay(1000);                 // Wait for the servos to move
+  Serial.println("Grab complete.");
+}
+
+void releaseServo(int angle) {
+  Serial.println("Releasing...");
+  servo1.write(0);             // Release servo 1 to zero position
+  servo2.write(180);           // Release servo 2 to its max (inverted zero)
+  delay(1000);                 // Wait for the servos to move
+  Serial.println("Release complete.");
+}
+
+void moveForward(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Move forward for the specified duration
+  stopMotors();     // Stop after moving forward
+}
+
+void turnLeft(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Turn left for the specified duration
+  stopMotors();     // Stop after turning left
+}
+
+void turnRight(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);  // Turn right for the specified duration
+  stopMotors();     // Stop after turning right
+}
+
+void rotateClockwise(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);  // Rotate clockwise for the specified duration
+  stopMotors();     // Stop after rotating clockwise
+}
+
+void rotateAntiClockwise(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Rotate anti-clockwise for the specified duration
+  stopMotors();     // Stop after rotating anti-clockwise
+}
+
+void stopMotors() {
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+
+#ifndef CAMERA_INDEX_H
+#define CAMERA_INDEX_H
+// OV2640 camera module pins (CAMERA_MODEL_AI_THINKER)
+#define PWDN_GPIO_NUM 32
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+#define Y9_GPIO_NUM 35
+#define Y8_GPIO_NUM 34
+#define Y7_GPIO_NUM 39
+#define Y6_GPIO_NUM 36
+#define Y5_GPIO_NUM 21
+#define Y4_GPIO_NUM 19
+#define Y3_GPIO_NUM 18
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+#define LED_GPIO_NUM 4
+
+
+#include "esp_http_server.h"
+#include "esp_timer.h"
+#include "esp_camera.h"
+#include "img_converters.h"
+#include "Arduino.h"
+
+#define PART_BOUNDARY "123456789000000000000987654321"
+static const char *_STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
+static const char *_STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
+static const char *_STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
+
+httpd_handle_t stream_httpd = NULL;
+httpd_handle_t camera_httpd = NULL;
+
+typedef struct {
+  httpd_req_t *req;
+  size_t len;
+} jpg_chunking_t;
+
+static size_t jpg_encode_stream(void *arg, size_t index, const void *data, size_t len) {
+  jpg_chunking_t *j = (jpg_chunking_t *)arg;
+  if (!index) {
+    j->len = 0;
+  }
+  if (httpd_resp_send_chunk(j->req, (const char *)data, len) != ESP_OK) {
+    return 0;
+  }
+  j->len += len;
+  return len;
+}
+
+// // Helper function to calculate color distance
+// int colorDistance(int r1, int g1, int b1, int r2, int g2, int b2) {
+//   return sqrt(pow(r1 - r2, 2) + pow(g1 - g2, 2) + pow(b1 - b2, 2));
+// }
+
+// Helper function to determine if a color is close to black
+bool isBlack(int r, int g, int b) {
+  const int BLACK_THRESHOLD = 50;  // Adjust this value as needed
+  return (r < BLACK_THRESHOLD && g < BLACK_THRESHOLD && b < BLACK_THRESHOLD);
+}
+
+// Helper function to determine if a color is close to yellow
+bool isYellow(int r, int g, int b) {
+  // Check if red and green are significantly higher than blue
+  if (r > b + 20 && g > b + 20) {
+    // Check if red and green are relatively close to each other
+    if (abs(r - g) < 50) {
+      // Additional check for very light yellows
+      if (r > 100 || g > 100) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void detectColor(camera_fb_t *fb) {
+  if (!fb) return;
+
+  digitalWrite(LED_GPIO_NUM, LOW);  // Turn off LED for color detection
+
+  uint8_t *buf = fb->buf;
+  size_t len = fb->len;
+
+  // Convert JPEG to RGB
+  uint8_t *rgb_buffer = (uint8_t *)malloc(fb->width * fb->height * 3);
+  if (!rgb_buffer) {
+    Serial.println("Failed to allocate memory for RGB buffer");
+    return;
+  }
+
+  bool converted = fmt2rgb888(buf, len, PIXFORMAT_JPEG, rgb_buffer);
+
+  if (!converted) {
+    Serial.println("Failed to convert image to RGB");
+    free(rgb_buffer);
+    return;
+  }
+
+  long red_sum = 0, green_sum = 0, blue_sum = 0;
+  for (int i = 0; i < fb->width * fb->height * 3; i += 3) {
+    red_sum += rgb_buffer[i];
+    green_sum += rgb_buffer[i + 1];
+    blue_sum += rgb_buffer[i + 2];
+  }
+
+  int total_pixels = fb->width * fb->height;
+  int red_avg = red_sum / total_pixels;
+  int green_avg = green_sum / total_pixels;
+  int blue_avg = blue_sum / total_pixels;
+
+  Serial.printf("Color range detected - R: %d, G: %d, B: %d\n", red_avg, green_avg, blue_avg);
+
+  // Color detection logic
+  if (isBlack(red_avg, green_avg, blue_avg)) {
+    Serial.println("Dominant color: Black");
+  } else if (isYellow(red_avg, green_avg, blue_avg)) {
+    Serial.println("Dominant color: Yellow");
+  } else {
+    Serial.println("No dominant color detected (not close to Yellow or Black)");
+  }
+
+  free(rgb_buffer);
+}
+
+
+static esp_err_t capture_handler(httpd_req_t *req) {
+  camera_fb_t *fb = NULL;
+  esp_err_t res = ESP_OK;
+
+  fb = esp_camera_fb_get();
+  if (!fb) {
+    Serial.println("Camera capture failed");
+    httpd_resp_send_500(req);
+    return ESP_FAIL;
+  }
+
+  httpd_resp_set_type(req, "image/jpeg");
+  httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  size_t fb_len = 0;
+  if (fb->format == PIXFORMAT_JPEG) {
+    fb_len = fb->len;
+    res = httpd_resp_send(req, (const char *)fb->buf, fb->len);
+  } else {
+    jpg_chunking_t jchunk = { req, 0 };
+    res = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
+    httpd_resp_send_chunk(req, NULL, 0);
+    fb_len = jchunk.len;
+  }
+  esp_camera_fb_return(fb);
+  return res;
+}
+static esp_err_t stream_handler(httpd_req_t *req) {
+  camera_fb_t *fb = NULL;
+  esp_err_t res = ESP_OK;
+  size_t _jpg_buf_len = 0;
+  uint8_t *_jpg_buf = NULL;
+  char *part_buf[64];
+
+  res = httpd_resp_set_type(req, _STREAM_CONTENT_TYPE);
+  if (res != ESP_OK) {
+    return res;
+  }
+
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  while (true) {
+    digitalWrite(LED_GPIO_NUM, HIGH);  // Turn on LED for capture
+    fb = esp_camera_fb_get();
+    if (!fb) {
+      Serial.println("Camera capture failed");
+      res = ESP_FAIL;
+    } else {
+      delay(100);
+      detectColor(fb);  // Perform color detection for each frame
+
+      if (fb->format != PIXFORMAT_JPEG) {
+        bool jpeg_converted = frame2jpg(fb, 80, &_jpg_buf, &_jpg_buf_len);
+        esp_camera_fb_return(fb);
+        fb = NULL;
+        if (!jpeg_converted) {
+          Serial.println("JPEG compression failed");
+          res = ESP_FAIL;
+        }
+      } else {
+        _jpg_buf_len = fb->len;
+        _jpg_buf = fb->buf;
+      }
+    }
+
+    if (res == ESP_OK) {
+      size_t hlen = snprintf((char *)part_buf, 64, _STREAM_PART, _jpg_buf_len);
+      res = httpd_resp_send_chunk(req, (const char *)part_buf, hlen);
+    }
+    if (res == ESP_OK) {
+      res = httpd_resp_send_chunk(req, (const char *)_jpg_buf, _jpg_buf_len);
+    }
+    if (res == ESP_OK) {
+      res = httpd_resp_send_chunk(req, _STREAM_BOUNDARY, strlen(_STREAM_BOUNDARY));
+    }
+    if (fb) {
+      esp_camera_fb_return(fb);
+      fb = NULL;
+      _jpg_buf = NULL;
+    } else if (_jpg_buf) {
+      free(_jpg_buf);
+      _jpg_buf = NULL;
+    }
+    if (res != ESP_OK) {
+      break;
+    }
+
+    // Add a small delay to slow down the stream and allow time for color detection output
+    // delay(200);
+  }
+
+  return res;
+}
+
+void startCameraServer() {
+  httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+  config.server_port = 80;
+
+  httpd_uri_t index_uri = {
+    .uri = "/",
+    .method = HTTP_GET,
+    .handler = stream_handler,
+    .user_ctx = NULL
+  };
+
+  httpd_uri_t capture_uri = {
+    .uri = "/capture",
+    .method = HTTP_GET,
+    .handler = capture_handler,
+    .user_ctx = NULL
+  };
+
+  Serial.printf("Starting web server on port: '%d'\n", config.server_port);
+  if (httpd_start(&camera_httpd, &config) == ESP_OK) {
+    httpd_register_uri_handler(camera_httpd, &index_uri);
+    httpd_register_uri_handler(camera_httpd, &capture_uri);
+  }
+
+  config.server_port += 1;
+  config.ctrl_port += 1;
+  Serial.printf("Starting stream server on port: '%d'\n", config.server_port);
+  if (httpd_start(&stream_httpd, &config) == ESP_OK) {
+    httpd_register_uri_handler(stream_httpd, &index_uri);
+  }
+}
+
+#endif  // CAMERA_INDEX_H

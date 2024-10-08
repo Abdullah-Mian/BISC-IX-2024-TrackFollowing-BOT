@@ -5,6 +5,7 @@
 #define motorA_backward 22
 #define motorB_forward 19
 #define motorB_backward 21
+#define LED 2
 
 // Define servo motor pins
 #define servo1Pin 5   // Pin for Servo 1
@@ -18,25 +19,34 @@ struct Command {
 
 // Array of commands with grab/release actions for servos and motor commands
 Command commands[] = {
-  { 'G', 180 },   // Grab (servo angle = 180)
-  { 'S', 0 },     // Release (servo angle = 0)
-  { 'G', 180 },   // Grab (servo angle = 180)
-  { 'S', 0 },     // Release (servo angle = 0)
-  // Commented out motor commands
-  // { 'F', 1494 },  // Move Forward
-  // { 'L', 790 },   // Turn Left (using mean value)
-  // { 'F', 1169 },  // Move Forward
-  // { 'R', 790 },   // Turn Right (using mean value)
-  // { 'R', 810 },   // Turn Right
-  // { 'F', 1239 },  // Move Forward
-  // { 'R', 790 },   // Turn Right
-  // { 'F', 989 },   // Move Forward
-  // { 'R', 790 },   // Turn Right
-  // { 'C', 1492 },  // Rotate Clockwise
-  // { 'L', 790 },   // Turn Left
-  // { 'F', 2100 },  // Move Forward
-  // { 'L', 864 },   // Turn Left
-  // { 'F', 1942 },  // Move Forward
+  { 'F', 1515 },  // Move Forward
+  { 'L', 677 },   // Turn Left
+  { 'F', 1301 },  // Move Forward
+  { 'R', 727 },   // Turn Right
+  { 'F', 995 },   // Move Forward
+  { 'R', 740 },   // Turn Right
+  { 'R', 740 },   // Turn Right
+  { 'F', 1093 },  // Move Forward
+  { 'R', 727 },   // Turn Right
+  { 'F', 2117 },  // Move Forward
+  { 'R', 727 },   // Turn Right
+  { 'F', 1298 },  // Move Forward
+  { 'C', 1492 },  // Rotate Clockwise
+  { 'F', 2582 },  // Move Forward
+  { 'C', 1492 },  // Rotate Clockwise
+  { 'F', 1500 },  // Move Forward
+  { 'R', 727 },   // Turn Right
+  { 'F', 3233 },  // Move Forward
+  // { 'L', 720 },   // Turn Left
+  { 'L', 707 },   // Turn Left
+  { 'F', 2461 }   // Move Forward
+  // { 'H', 1000 },  // Hit Forward (doubled time)
+  // { 'J', 1000 },
+  // { 'G', 180 },   // Grab (servo angle = 180)
+  // { 'S', 0 },     // Release (servo angle = 0)
+  // { 'G', 180 },   // Grab (servo angle = 180)
+  // { 'S', 0 },     // Release (servo angle = 0)
+
 };
 
 // Create Servo objects
@@ -51,7 +61,8 @@ void setup() {
   pinMode(motorA_backward, OUTPUT);
   pinMode(motorB_forward, OUTPUT);
   pinMode(motorB_backward, OUTPUT);
-
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED ,LOW);
   // Attach servos
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
@@ -107,6 +118,14 @@ void executeCommand(char commandChar, int value) {
       rotateAntiClockwise(value);
       delay(1500);
       break;
+    case 'H':
+      HitForward(value);
+      delay(1500);
+      break;
+    case 'J':
+      HitBackward(value);
+      delay(1500);
+      break;
     default:
       stopMotors();
       delay(1500);
@@ -114,13 +133,13 @@ void executeCommand(char commandChar, int value) {
   }
 }
 
-void checkServoPosition(Servo &servo, int servoNumber) {
+void checkServoPosition(Servo& servo, int servoNumber) {
   int currentPos = servo.read();  // Get current position of servo
   if (servoNumber == 1) {
     if (currentPos != 0) {
       Serial.println("Servo 1 is not at zero position, resetting to zero...");
       servo.write(0);  // Move to zero position if not already there
-      delay(1000);  // Wait for servo to move
+      delay(1000);     // Wait for servo to move
     } else {
       Serial.println("Servo 1 is already at zero position.");
     }
@@ -128,7 +147,7 @@ void checkServoPosition(Servo &servo, int servoNumber) {
     if (currentPos != 180) {
       Serial.println("Servo 2 is not at zero position, resetting to zero...");
       servo.write(180);  // Move to inverted zero position if not already there
-      delay(1000);  // Wait for servo to move
+      delay(1000);       // Wait for servo to move
     } else {
       Serial.println("Servo 2 is already at zero position.");
     }
@@ -137,18 +156,40 @@ void checkServoPosition(Servo &servo, int servoNumber) {
 
 void grab(int angle) {
   Serial.println("Grabbing...");
-  servo1.write(angle);         // Grab with servo 1
-  servo2.write(180 - angle);   // Inverted grab with servo 2
-  delay(1000);                 // Wait for the servos to move
+  servo1.write(angle);        // Grab with servo 1
+  servo2.write(180 - angle);  // Inverted grab with servo 2
+  delay(1000);                // Wait for the servos to move
   Serial.println("Grab complete.");
 }
 
 void releaseServo(int angle) {
   Serial.println("Releasing...");
-  servo1.write(0);             // Release servo 1 to zero position
-  servo2.write(180);           // Release servo 2 to its max (inverted zero)
-  delay(1000);                 // Wait for the servos to move
+  servo1.write(0);    // Release servo 1 to zero position
+  servo2.write(180);  // Release servo 2 to its max (inverted zero)
+  delay(1000);        // Wait for the servos to move
   Serial.println("Release complete.");
+}
+
+void HitForward(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Move forward for the specified duration
+  stopMotors();     // Stop after moving forward
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);  // Move backward for the specified duration
+  stopMotors();
+}
+
+void HitBackward(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);  // Move backward for the specified duration
+  stopMotors();
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Move forward for the specified duration
+  stopMotors();     // Stop after moving forward
 }
 
 void moveForward(int duration) {

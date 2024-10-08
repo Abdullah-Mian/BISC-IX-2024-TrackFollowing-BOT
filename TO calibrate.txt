@@ -1,0 +1,132 @@
+#include <Arduino.h>
+
+// Define motor control pins
+#define motorA_forward 23
+#define motorA_backward 22
+#define motorB_forward 19
+#define motorB_backward 21
+#define LED 2
+
+// Variables to track the last command and execution time
+char lastCommand = '\0';
+unsigned long commandStartTime = 0;
+unsigned long lastDuration = 0;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(motorA_forward, OUTPUT);
+  pinMode(motorA_backward, OUTPUT);
+  pinMode(motorB_forward, OUTPUT);
+  pinMode(motorB_backward, OUTPUT);
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
+}
+
+void loop() {
+  // Check for serial input
+  if (Serial.available() > 0) {
+    char commandChar = Serial.read();
+    commandChar = toupper(commandChar);  // Normalize input to uppercase
+
+    if (commandChar == 'S') {
+      // Stop motors and print last command and duration
+      stopMotors();
+      unsigned long runTime = millis() - commandStartTime;
+      Serial.print("Last command: ");
+      Serial.print(lastCommand);
+      Serial.print(", Run time: ");
+      Serial.print(runTime);
+      Serial.println(" ms");
+
+      // Reset command tracking
+      lastCommand = '\0';
+      commandStartTime = 0;
+      lastDuration = runTime;
+    } else if (commandChar == 'F' || commandChar == 'B' || commandChar == 'L' || commandChar == 'R' || commandChar == 'C' || commandChar == 'A') {
+      // Execute command
+      executeCommand(commandChar);
+    }
+  }
+}
+
+void executeCommand(char commandChar) {
+  stopMotors();  // Ensure motors are stopped before issuing a new command
+  lastCommand = commandChar;
+  commandStartTime = millis();  // Start timing the command
+
+  switch (commandChar) {
+    case 'F':
+      Serial.println("Moving Forward");
+      moveForward();
+      break;
+    case 'B':
+      Serial.println("Moving Backward");
+      moveBackward();
+      break;
+    case 'C':
+      Serial.println("Rotating Clockwise");
+      rotateClockwise();
+      break;
+    case 'A':
+      Serial.println("Rotating Anti-Clockwise");
+      rotateAntiClockwise();
+      break;
+    case 'L':
+      Serial.println("Turning Left");
+      turnLeft();
+      break;
+    case 'R':
+      Serial.println("Turning Right");
+      turnRight();
+      break;
+  }
+}
+
+void moveForward() {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+void moveBackward() {
+  digitalWrite(motorB_backward, HIGH);
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorB_forward, LOW);
+}
+
+void rotateClockwise() {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+}
+
+void rotateAntiClockwise() {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+void turnLeft() {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+void turnRight() {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+}
+
+void stopMotors() {
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}

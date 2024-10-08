@@ -1,0 +1,84 @@
+// Define TCS3200 pins
+#define S0 2
+#define S1 3
+#define S2 4
+#define S3 5
+#define sensorOut 6
+#define ledPin 7 // Pin to control the LED on the sensor
+
+// Variables to store color readings
+int redFrequency = 0;
+int greenFrequency = 0;
+int blueFrequency = 0;
+
+// Thresholds for detecting black color
+const int blackThreshold = 500;  // Set an appropriate threshold
+
+void setup() {
+  // Set pin modes
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorOut, INPUT);
+  pinMode(ledPin, OUTPUT); // Set LED pin as OUTPUT
+
+  // Turn on the sensor LED
+  digitalWrite(ledPin, HIGH);
+
+  // Set frequency scaling to 20% (S0 HIGH, S1 LOW)
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, LOW);
+
+  // Start serial communication
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Read the color values
+  readColors();
+  
+  // Check for black detection
+  detectBlack();
+  
+  delay(1000); // Delay between readings
+}
+
+// Function to read color components
+void readColors() {
+  // Read Red component
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, LOW);
+  redFrequency = pulseIn(sensorOut, LOW);
+  
+  // Read Green component
+  digitalWrite(S2, HIGH);
+  digitalWrite(S3, HIGH);
+  greenFrequency = pulseIn(sensorOut, LOW);
+
+  // Read Blue component
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, HIGH);
+  blueFrequency = pulseIn(sensorOut, LOW);
+
+  // Print color values for debugging
+  Serial.print("R = ");
+  Serial.print(redFrequency);
+  Serial.print(" | G = ");
+  Serial.print(greenFrequency);
+  Serial.print(" | B = ");
+  Serial.println(blueFrequency);
+}
+
+// Function to detect black
+void detectBlack() {
+  // Check if the color is close to black based on the threshold
+  if (redFrequency > blackThreshold && greenFrequency > blackThreshold && blueFrequency > blackThreshold) {
+    Serial.println("Black detected");
+  } else {
+    Serial.println("Black not detected");
+  }
+}
+---------------------------------------------------------------------------------------
+
+

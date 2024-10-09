@@ -1,3 +1,36 @@
+Command commands[] = {
+  // { 'J', 1000 },
+
+  { 'F', 1655 },  // Move Forward
+  { 'L', 777 },   // Turn Left
+  { 'F', 1231 },  // Move Forward
+  { 'R', 800 },   // Turn Right
+  { 'F', 1195 },   // Move Forward
+  { 'H', 500 },
+  { 'R', 800 },   // Turn Right
+  { 'H', 500 },
+  { 'R', 800 },   // Turn Right
+  { 'F', 1250 },  // Move Forward // long
+  { 'R', 820 },   // Turn Right
+  { 'F', 2217 },  // Move Forward
+  { 'R', 650 },   // Turn Right
+  { 'F', 900 },  // Move Forward
+  { 'H', 500 },
+  { 'C', 1502 },  // Rotate Clockwise
+  { 'F', 2600 },  // Move Forward
+  { 'H', 500 },
+  { 'C', 1502 },  // Rotate Clockwise
+  { 'F', 1250 },  // Move Forward
+  { 'R', 700 },   // Turn Right
+  { 'F', 3533 },  // Move Forward
+  { 'L', 700 },   // Turn Left
+  { 'F', 2461 },   // Move Forward
+  { 'G', 190 },  // Grab (servo angle = 190)
+  { 'S', 0 },    // Release (servo angle = 0)
+
+};
+
+------------------------------------------------------
 #include <Servo.h>
 
 // Define TCS3200 pins
@@ -46,17 +79,17 @@ Command commands[] = {
   { 'H', 500 },
   { 'R', 800 },   // Turn Right
   { 'F', 1250 },  // Move Forward // long
-  { 'R', 820 },   // Turn Right
-  { 'F', 2217 },  // Move Forward
-  { 'R', 650 },   // Turn Right
+  { 'R', 860 },   // Turn Right
+  { 'F', 2517 },  // Move Forward
+  { 'R', 770 },   // Turn Right
   { 'F', 900 },  // Move Forward
   { 'H', 500 },
-  { 'C', 1502 },  // Rotate Clockwise
+  { 'C', 1602 },  // Rotate Clockwise
   { 'F', 2600 },  // Move Forward
   { 'H', 500 },
-  { 'C', 1502 },  // Rotate Clockwise
+  { 'C', 1602 },  // Rotate Clockwise
   { 'F', 1250 },  // Move Forward
-  { 'R', 700 },   // Turn Right
+  { 'R', 850 },   // Turn Right
   { 'F', 3533 },  // Move Forward
   { 'L', 700 },   // Turn Left
   { 'F', 2461 },   // Move Forward
@@ -327,3 +360,5 @@ void stopMotors() {
   digitalWrite(motorB_forward, LOW);
   digitalWrite(motorB_backward, LOW);
 }
+
+

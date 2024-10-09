@@ -1,12 +1,12 @@
-#include <Servo.h>
+#include <ESP32Servo.h>
 
 // Define TCS3200 pins
-#define S0 4
-#define S1 5
-#define S2 6
-#define S3 7
-#define sensorOut 3
-#define ledPin 2  // Pin to control the LED on the sensor
+#define S0 33
+#define S1 32
+#define S2 35
+#define S3 34
+#define sensorOut 25
+#define ledPin 26  // Pin to control the LED on the sensor
 
 // Variables to store color readings
 int redFrequency = 0;
@@ -14,17 +14,19 @@ int greenFrequency = 0;
 int blueFrequency = 0;
 
 // Thresholds for detecting black color
-const int blackThreshold = 700;  // Set an appropriate threshold
+const int blackThreshold = 500;  // Set an appropriate threshold
 
 // Define motor pins
-#define motorA_forward 13
-#define motorA_backward 12
-#define motorB_forward 10
-#define motorB_backward 11
+#define motorA_forward 23
+#define motorA_backward 22
+#define motorB_forward 19
+#define motorB_backward 21
 
 // Define servo motor pins
-#define servo1Pin 8  // Pin for Servo 1
-#define servo2Pin 9  // Pin for Servo 2
+// #define servo1Pin 5   // Pin for Servo 1
+// #define servo2Pin 18  // Pin for Servo 2
+#define servo1Pin 13   // Pin for Servo 1
+#define servo2Pin 12  // Pin for Servo 2
 
 // Define a struct to hold command and value
 struct Command {
@@ -34,34 +36,34 @@ struct Command {
 
 // Array of commands with grab/release actions for servos and motor commands
 Command commands[] = {
+  // { 'H', 1000 },  // Hit Forward (doubled time)
   // { 'J', 1000 },
-
+  // { 'G', 180 },  // Grab (servo angle = 180)
+  // { 'S', 0 },    // Release (servo angle = 0)
+  // { 'G', 180 },  // Grab (servo angle = 180)
+  // { 'S', 0 },    // Release (servo angle = 0)
   { 'F', 1655 },  // Move Forward
   { 'L', 777 },   // Turn Left
-  { 'F', 1231 },  // Move Forward
-  { 'R', 800 },   // Turn Right
+  { 'F', 1201 },  // Move Forward
+  { 'R', 780 },   // Turn Right
   { 'F', 1195 },   // Move Forward
-  { 'H', 500 },
   { 'R', 800 },   // Turn Right
-  { 'H', 500 },
   { 'R', 800 },   // Turn Right
   { 'F', 1250 },  // Move Forward // long
-  { 'R', 820 },   // Turn Right
+  { 'R', 900 },   // Turn Right
+
   { 'F', 2217 },  // Move Forward
-  { 'R', 650 },   // Turn Right
-  { 'F', 900 },  // Move Forward
-  { 'H', 500 },
-  { 'C', 1502 },  // Rotate Clockwise
-  { 'F', 2600 },  // Move Forward
-  { 'H', 500 },
-  { 'C', 1502 },  // Rotate Clockwise
-  { 'F', 1250 },  // Move Forward
-  { 'R', 700 },   // Turn Right
-  { 'F', 3533 },  // Move Forward
-  { 'L', 700 },   // Turn Left
-  { 'F', 2461 },   // Move Forward
-  { 'G', 190 },  // Grab (servo angle = 190)
-  { 'S', 0 },    // Release (servo angle = 0)
+  { 'R', 720 },   // Turn Right
+  { 'F', 1298 },  // Move Forward
+  { 'C', 1632 },  // Rotate Clockwise
+  { 'F', 2582 },  // Move Forward
+  { 'C', 1632 },  // Rotate Clockwise
+  { 'F', 1300 },  // Move Forward
+  { 'R', 800 },   // Turn Right
+  { 'F', 3433 },  // Move Forward
+  // { 'L', 720 },   // Turn Left
+  { 'L', 750 },   // Turn Left
+  { 'F', 2461 }   // Move Forward
 
 };
 
@@ -70,14 +72,13 @@ Servo servo1;
 Servo servo2;
 
 void setup() {
-  Serial.begin(9600);  // Start serial communication
+  Serial.begin(115200);  // Start serial communication
 
   // Set up motor pins
   pinMode(motorA_forward, OUTPUT);
   pinMode(motorA_backward, OUTPUT);
   pinMode(motorB_forward, OUTPUT);
   pinMode(motorB_backward, OUTPUT);
-
   // Attach servos
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
@@ -106,9 +107,9 @@ void setup() {
 
 void loop() {
   // Execute each command in the array
-  delay(5000);
-  for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
-    executeCommand(commands[i].action, commands[i].value);
+  delay(1000);
+  for (const Command& cmd : commands) {
+    executeCommand(cmd.action, cmd.value);
   }
 
   // After executing all commands, stop the program
@@ -118,15 +119,14 @@ void loop() {
   }
 }
 
-
 void executeCommand(char commandChar, int value) {
   switch (commandChar) {
     case 'G':
-      grab(value);
+      // grab(value);
       delay(5000);
       break;
     case 'S':
-      releaseServo(value);
+      // releaseServo(value);
       delay(1000);
       break;
     case 'F':
@@ -191,7 +191,6 @@ void grab(int angle) {
   servo2.write(180 - angle);  // Inverted grab with servo 2
   delay(1000);                // Wait for the servos to move
   Serial.println("Grab complete.");
-  delay(2000);
 }
 
 void releaseServo(int angle) {
@@ -200,7 +199,6 @@ void releaseServo(int angle) {
   servo2.write(180);  // Release servo 2 to its max (inverted zero)
   delay(1000);        // Wait for the servos to move
   Serial.println("Release complete.");
-  delay(2000);
 }
 
 void HitForward(int duration) {
@@ -208,8 +206,7 @@ void HitForward(int duration) {
     digitalWrite(motorA_forward, HIGH);
     digitalWrite(motorB_forward, HIGH);
     delay(duration);  // Move forward for the specified duration
-    stopMotors();  // Stop after moving forward
-    delay(500);
+    stopMotors();     // Stop after moving forward
     digitalWrite(motorA_backward, HIGH);
     digitalWrite(motorB_backward, HIGH);
     delay(duration);  // Move backward for the specified duration
@@ -225,7 +222,6 @@ void HitBackward(int duration) {
     analogWrite(motorB_backward, 170);
     delay(duration);  // Move backward for the specified duration
     stopMotors();
-    delay(500);
     analogWrite(motorA_forward, 170);
     analogWrite(motorB_forward, 170);
     delay(duration);  // Move forward for the specified duration
@@ -235,29 +231,20 @@ void HitBackward(int duration) {
   }
 }
 
-
 bool checkBlackDetection() {
-  digitalWrite(ledPin, HIGH);  // Turn on LED for better detection
+  digitalWrite(ledPin, HIGH);
   int blackCount = 0;
 
   for (int i = 0; i < 3; i++) {
     readColors();  // Read the colors
-    if (!(redFrequency < blackThreshold && greenFrequency < blackThreshold && blueFrequency < blackThreshold)) {
+    if (redFrequency > blackThreshold && greenFrequency > blackThreshold && blueFrequency > blackThreshold) {
       blackCount++;
     }
-    delay(500);  // Delay between checks
+    delay(100);  // Delay between checks
   }
-
-  digitalWrite(ledPin, LOW);  // Turn off LED after detection
-  if (blackCount >= 2) {
-    Serial.print("black detected");
-  } else {
-    Serial.print("not detected");
-  }
-
+  digitalWrite(ledPin, LOW);
   return (blackCount >= 2);  // If black is detected in at least 2 out of 3 checks
 }
-
 
 // Function to read color components
 void readColors() {
@@ -266,15 +253,15 @@ void readColors() {
   digitalWrite(S3, LOW);
   redFrequency = pulseIn(sensorOut, LOW);
 
-  // Read Blue component
-  digitalWrite(S2, LOW);
-  digitalWrite(S3, HIGH);
-  blueFrequency = pulseIn(sensorOut, LOW);
-
   // Read Green component
   digitalWrite(S2, HIGH);
   digitalWrite(S3, HIGH);
   greenFrequency = pulseIn(sensorOut, LOW);
+
+  // Read Blue component
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, HIGH);
+  blueFrequency = pulseIn(sensorOut, LOW);
 
   // Print color values for debugging
   Serial.print("R = ");
@@ -319,7 +306,6 @@ void rotateAntiClockwise(int duration) {
   delay(duration);  // Rotate anti-clockwise for the specified duration
   stopMotors();     // Stop after rotating anti-clockwise
 }
-
 
 void stopMotors() {
   digitalWrite(motorA_forward, LOW);

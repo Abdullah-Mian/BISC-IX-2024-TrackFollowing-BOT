@@ -1,0 +1,274 @@
+#include <Servo.h>
+#define ledPin 2  // Pin to control the LED on the sensor
+#define motorA_forward 12
+#define motorA_backward 13
+#define motorB_forward 10
+#define motorB_backward 11
+
+// Define servo motor pins
+#define servo1Pin 6  // Pin for Servo 1
+#define servo2Pin 9  // Pin for Servo 2
+
+
+// Define a struct to hold command and value
+struct Command {
+  char action;
+  int value;  // Can be duration or angle for servos
+};
+
+// Array of commands with grab/release actions for servos and motor commands
+Command commands[] = {
+  // { 'J', 1000 },
+
+  // { 'F', 1655 },  // Move Forward
+  // { 'L', 777 },   // Turn Left
+  // { 'F', 1231 },  // Move Forward
+  // { 'R', 800 },   // Turn Right
+  // { 'F', 1195 },   // Move Forward
+  // { 'H', 500 },
+  // { 'R', 800 },   // Turn Right
+  // { 'H', 500 },
+  // { 'R', 800 },   // Turn Right
+  // { 'F', 1250 },  // Move Forward // long
+  // { 'R', 820 },   // Turn Right
+  // { 'F', 2217 },  // Move Forward
+  // { 'R', 650 },   // Turn Right
+  // { 'F', 900 },  // Move Forward
+  // { 'H', 500 },
+  // { 'C', 1502 },  // Rotate Clockwise
+  // { 'F', 2600 },  // Move Forward
+  // { 'H', 500 },
+  // { 'C', 1502 },  // Rotate Clockwise
+  // { 'F', 1250 },  // Move Forward
+  // { 'R', 700 },   // Turn Right
+  // { 'F', 3533 },  // Move Forward
+  // { 'L', 700 },   // Turn Left
+  // { 'F', 2461 },   // Move Forward
+  // { 'G', 135 },  // Grab (servo angle = 190)
+  // { 'S', 0 },    // Release (servo angle = 0)
+  // { 'G', 135 },  // Grab (servo angle = 190)
+  // { 'S', 0 },    // Release (servo angle = 0)
+  // { 'G', 135 },  // Grab (servo angle = 190)
+  // { 'S', 0 },    // Release (servo angle = 0)
+
+};
+
+// Variables to track the last command and execution time
+char lastCommand = '\0';
+unsigned long commandStartTime = 0;
+unsigned long lastDuration = 0;
+
+// Create Servo objects
+Servo servo1;
+Servo servo2;
+
+void setup() {
+  Serial.begin(9600);  // Start serial communication
+
+  // Set up motor pins
+  pinMode(motorA_forward, OUTPUT);
+  pinMode(motorA_backward, OUTPUT);
+  pinMode(motorB_forward, OUTPUT);
+  pinMode(motorB_backward, OUTPUT);
+
+  // Attach servos
+  servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+
+  // Check if servos are at zero position on start
+  checkServoPosition(servo1, 1);
+  checkServoPosition(servo2, 2);
+
+  Serial.println("Both servos are at zero position.");
+  pinMode(ledPin, OUTPUT);  // Set LED pin as OUTPUT
+
+  // Turn on the sensor LED
+  digitalWrite(ledPin, LOW);
+}
+void loop() {
+  // Check for serial input
+  if (Serial.available() > 0) {
+    char commandChar = Serial.read();
+    commandChar = toupper(commandChar);  // Normalize input to uppercase
+
+    if (commandChar == 'S') {
+      // Stop motors and print last command and duration
+      stopMotors();
+      unsigned long runTime = millis() - commandStartTime;
+      Serial.print("Last command: ");
+      Serial.print(lastCommand);
+      Serial.print(", Run time: ");
+      Serial.print(runTime);
+      Serial.println(" ms");
+
+      // Reset command tracking
+      lastCommand = '\0';
+      commandStartTime = 0;
+      lastDuration = runTime;
+    } else if (commandChar == 'F' || commandChar == 'B' || commandChar == 'L' || commandChar == 'R' || commandChar == 'C' || commandChar == 'A' || commandChar == 'G' || commandChar == 'T' || commandChar == 'H' || commandChar == 'J') {
+      // Execute command
+      executeCommand(commandChar);
+    }
+  }
+}
+
+void executeCommand(char commandChar) {
+  stopMotors();  // Ensure motors are stopped before issuing a new command
+  lastCommand = commandChar;
+  commandStartTime = millis();  // Start timing the command
+
+  switch (commandChar) {
+    case 'G':
+      grab();
+      break;
+    case 'T':
+      releaseServo();
+      break;
+    case 'F':
+      Serial.println("Moving Forward");
+      moveForward();
+      break;
+    case 'H':
+      Serial.println("Forward Hit");
+      HitForward();
+      break;
+    case 'J':
+      Serial.println("Forward Hit");
+      HitBackward();
+      break;
+    case 'B':
+      Serial.println("Moving Backward");
+      moveBackward();
+      break;
+    case 'C':
+      Serial.println("Rotating Clockwise");
+      rotateClockwise();
+      break;
+    case 'A':
+      Serial.println("Rotating Anti-Clockwise");
+      rotateAntiClockwise();
+      break;
+    case 'L':
+      Serial.println("Turning Left");
+      turnLeft();
+      break;
+    case 'R':
+      Serial.println("Turning Right");
+      turnRight();
+      break;
+  }
+}
+
+void checkServoPosition(Servo& servo, int servoNumber) {
+  int currentPos = servo.read();  // Get current position of servo
+  if (servoNumber == 1) {
+    if (currentPos != 0) {
+      Serial.println("Servo 1 is not at zero position, resetting to zero...");
+      servo.write(0);  // Move to zero position if not already there
+      delay(1000);     // Wait for servo to move
+    } else {
+      Serial.println("Servo 1 is already at zero position.");
+    }
+  } else if (servoNumber == 2) {
+    if (currentPos != 180) {
+      Serial.println("Servo 2 is not at zero position, resetting to zero...");
+      servo.write(180);  // Move to inverted zero position if not already there
+      delay(1000);       // Wait for servo to move
+    } else {
+      Serial.println("Servo 2 is already at zero position.");
+    }
+  }
+}
+
+void grab() {
+  Serial.println("Grabbing...");
+  servo1.write(120);        // Grab with servo 1
+  servo2.write(180 - 120);  // Inverted grab with servo 2
+  Serial.println("Grab complete.");
+  delay(2000);
+}
+
+void releaseServo() {
+  Serial.println("Releasing...");
+  servo1.write(0);    // Release servo 1 to zero position
+  servo2.write(180);  // Release servo 2 to its max (inverted zero)
+  Serial.println("Release complete.");
+  delay(2000);
+}
+
+void HitForward() {
+  // if (!checkBlackDetection()) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  stopMotors();
+  delay(500);
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  stopMotors();
+  // } else {
+  Serial.println("Hit Forward aborted: Black detected.");
+  // }
+}
+
+void HitBackward() {
+  // if (!checkBlackDetection()) {
+  analogWrite(motorA_backward, 170);
+  analogWrite(motorB_backward, 170);
+  stopMotors();
+  delay(500);
+  analogWrite(motorA_forward, 170);
+  analogWrite(motorB_forward, 170);
+  stopMotors();  // Stop after moving forward
+                 // } else {
+  Serial.println("Hit Backward aborted: Black detected.");
+  // }
+}
+
+void moveForward() {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+void moveBackward() {
+  digitalWrite(motorB_backward, HIGH);
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorB_forward, LOW);
+}
+
+void rotateClockwise() {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+}
+
+void rotateAntiClockwise() {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+void turnLeft() {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}
+
+void turnRight() {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+}
+
+void stopMotors() {
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}

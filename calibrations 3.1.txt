@@ -1,0 +1,28 @@
+  
+{ 'F', 2472 },  // Moving Forward
+  { 'L', 150 },   // Turning Left
+  { 'F', 1724 },  // Moving Forward
+  { 'R', 186 },   // Grabbing
+  { 'F', 434 },  // Moving Forward
+  { 'G', 120 },   // Grabbing
+
+Moving Backward
+Last command: B, Run time: 928 ms
+Turning Left
+Last command: L, Run time: 612 ms
+Moving Forward
+Last command: F, Run time: 674 ms
+Turning Left
+Last command: L, Run time: 184 ms
+Turning Left
+Last command: L, Run time: 176 ms
+Moving Forward
+Last command: F, Run time: 1308 ms
+Turning Right
+Last command: R, Run time: 809 ms
+Moving Forward
+Last command: F, Run time: 2461 ms
+Turning Right
+Last command: R, Run time: 722 ms
+Moving Forward
+Last command: F, Run time: 1619 ms

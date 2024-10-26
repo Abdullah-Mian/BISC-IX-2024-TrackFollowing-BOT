@@ -11,7 +11,6 @@ struct Command {
 
 // Function prototypes
 void executeCommand(char commandChar, int value);
-void handleMovement(char commandChar, int value);
 void checkForObstacles();
 void checkServoPosition(Servo& servo, int servoNumber);
 void grab(int angle);
@@ -24,6 +23,8 @@ void turnLeft(int duration);
 void turnRight(int duration);
 void moveRight(int duration);
 void moveLeft(int duration);
+void rotateClockwise(int duration);
+void rotateAntiClockwise(int duration);
 void stopMotors();
 
 #endif

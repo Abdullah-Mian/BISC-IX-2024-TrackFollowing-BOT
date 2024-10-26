@@ -28,4 +28,38 @@
   //{ 'L', 750 },   // Turn Left
   //{ 'F', 2461 },   // Move Forward
   
-  /// Second PArt 
+   /// Second Part
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'F', 600 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'R', 150 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'G', 90 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'B', 568 },
+  // { 'L', 854 },
+  // { 'F', 1887 },
+  // { 'R', 716 },
+  // { 'F', 2238 },
+  // { 'R', 740 },
+  // { 'F', 1705 },
+  // { 'S', 0 },
+  // { 'R', 740 },
+  // { 'B', 200 },
+  // { 'R', 805 },
+  // { 'F', 400 },
+  // { 'G', 90 },
+  // { 'B', 950 },
+  // { 'L', 805 },
+  // { 'F', 230 },
+  // { 'S', 0 },
+  // { 'B', 790 },
+
+  { 'R', 805 },
+  { 'F', 870 },
+  { 'G', 90 },
+  { 'B', 500 },
+  { 'L', 805 },
+  { 'F', 720 },
+  { 'S', 0 },
+ 

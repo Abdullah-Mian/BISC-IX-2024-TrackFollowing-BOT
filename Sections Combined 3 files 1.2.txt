@@ -1,5 +1,4 @@
-// .ino.cpp
-
+///////////// .ino.cpp
 #include <Servo.h>
 #include "functions.h"
 
@@ -11,7 +10,7 @@
 
 Servo servo1;
 Servo servo2;
-
+char CheckSkipObsticlecheck;
 // Define command array
 Command commands[] = {
   // { 'F', 1655 },  // Move Forward
@@ -43,24 +42,47 @@ Command commands[] = {
   // { 'F', 3933 },  // Move Forward
   //{ 'L', 750 },   // Turn Left
   //{ 'F', 2461 },   // Move Forward
+
+  /// Second Part
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'F', 600 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'R', 150 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'G', 90 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'B', 568 },
+  // //
+  // { 'L', 854 },
+  // { 'F', 1887 },
+  //
+  // { 'R', 716 },
+  // { 'F', 2238 },
+  // { 'R', 740 },
+  // { 'F', 1705 },
+  // { 'S', 0 },
+  // { 'R', 740 },
   
-  /// Second PArt 
-  { 'F', 752 },
-  { 'R', 50 },
-  { 'F', 1724 },
-  { 'R', 186 },
-  { 'F', 434 },
-  { 'G', 80 },
-  { 'B', 928 },
-  { 'L', 612 },
-  { 'F', 674 },
-  { 'L', 360 },
-  { 'F', 1308 },
-  { 'R', 809 },
-  { 'F', 2461 },
-  { 'R', 722 },
-  { 'F', 1619 },
+  // { 'B', 200 },
+  // { 'R', 805 },
+  // { 'F', 400 },
+  // { 'G', 90 },
+  // { 'B', 950 },
+  // { 'L', 805 },
+  // { 'F', 230 },
+  // { 'S', 0 },
+  // { 'B', 790 },
+
+  { 'R', 805 },
+  { 'F', 870 },
+  { 'G', 90 },
+  { 'B', 500 },
+  { 'L', 805 },
+  { 'F', 720 },
   { 'S', 0 },
+
+
+
 };
 
 void setup() {
@@ -84,25 +106,37 @@ void setup() {
 void loop() {
   // Execute each command in the array
   delay(5000);
-  // for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
-  //   executeCommand(commands[i].action, commands[i].value);
-  //   delay(1000);
-  //   checkForObstacles();
-  //   delay(1000);
-  // }
+  bool skipNextObstacleCheck = false;
 
-  // // After executing all commands, stop the program
-  // while (true) {
-  //   stopMotors();
-  //   delay(1000);
-  // }
+  for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+    CheckSkipObsticlecheck = commands[i].action;
+    Serial.println(CheckSkipObsticlecheck);
+    executeCommand(commands[i].action, commands[i].value);
+    delay(1000);
 
-  checkForObstacles();
-  delay(1000);
+    if (CheckSkipObsticlecheck == 'D') {
+      skipNextObstacleCheck = true;
+      continue;
+    }
+    if (!skipNextObstacleCheck) {
+      checkForObstacles();
+    }
+    skipNextObstacleCheck = false;
+    delay(1000);
+  }
+
+  // After executing all commands, stop the program
+  while (true) {
+    stopMotors();
+    delay(10000);
+  }
+
+  // checkForObstacles();
+  // delay(1000);
 }
 
 
-// functions.h
+///////////////// functions.h
 
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
@@ -136,7 +170,8 @@ void stopMotors();
 #endif
 
 
-// functions.cpp
+////////////// functions.cpp
+
 #include "functions.h"
 #include <Arduino.h>
 
@@ -361,3 +396,5 @@ void stopMotors() {
   digitalWrite(motorB_forward, LOW);
   digitalWrite(motorB_backward, LOW);
 }
+
+

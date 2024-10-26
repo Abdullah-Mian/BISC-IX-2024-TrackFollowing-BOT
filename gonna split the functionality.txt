@@ -1,0 +1,228 @@
+#include <Servo.h>
+
+#define ledPin 2             // Pin to control the LED on the sensor
+#define motorA_forward 12
+#define motorA_backward 13
+#define motorB_forward 10
+#define motorB_backward 11
+
+// Define servo motor pins
+#define servo1Pin 6          // Pin for Servo 1
+#define servo2Pin 9          // Pin for Servo 2
+
+// IR pins
+#define leftIR 7
+#define rightIR 8
+
+// Create Servo objects
+Servo servo1;
+Servo servo2;
+
+// Define a struct to hold command and value
+struct Command {
+  char action;
+  int value;                // Can be duration or angle for servos
+};
+
+// Array of commands with grab/release actions for servos and motor commands
+Command commands[] = {
+  { 'F', 2472 },            // Moving Forward
+  { 'L', 150 },             // Turning Left
+  { 'F', 1724 },            // Moving Forward
+  { 'R', 186 },             // Grabbing
+  { 'F', 434 },             // Moving Forward
+  { 'G', 120 },             // Grabbing
+  { 'B', 928 },
+  { 'L', 612 },
+  { 'F', 674 },
+  { 'L', 360 },
+  { 'F', 1308 },
+  { 'R', 809 },
+  { 'F', 2461 },
+  { 'R', 722 },
+  { 'F', 1619 },
+  { 'S', 0 },
+};
+
+void setup() {
+  Serial.begin(9600);       // Start serial communication
+
+  // Set up motor pins
+  pinMode(motorA_forward, OUTPUT);
+  pinMode(motorA_backward, OUTPUT);
+  pinMode(motorB_forward, OUTPUT);
+  pinMode(motorB_backward, OUTPUT);
+  pinMode(leftIR, INPUT);
+  pinMode(rightIR, INPUT);
+  pinMode(ledPin, OUTPUT);  // Set LED pin as OUTPUT
+  digitalWrite(rightIR, LOW);
+  digitalWrite(leftIR, LOW);
+
+  // Attach servos
+  servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+
+  // Check if servos are at zero position on start
+  checkServoPosition(servo1, 1);
+  checkServoPosition(servo2, 2);
+  Serial.println("Both servos are at zero position.");
+
+  // Turn on the sensor LED
+  digitalWrite(ledPin, LOW);
+}
+
+void loop() {
+  // Execute each command in the array
+  // delay(5000);
+  // for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+  //   executeCommand(commands[i].action, commands[i].value);
+  // }
+
+  // // After executing all commands, stop the program
+  // while (true) {
+  //   stopMotors();
+  //   delay(1000);
+  // }
+  checkForObstacles();
+  delay(3000);
+}
+
+void executeCommand(char commandChar, int value) {
+  switch (commandChar) {
+    case 'G':
+      grab(value);
+      delay(1000);
+      break;
+    case 'S':
+      releaseServo(value);
+      delay(1000);
+      break;
+    default:
+      // Handle movements
+      handleMovement(commandChar, value);
+      break;
+  }
+}
+
+void handleMovement(char commandChar, int value) {
+  // Check for obstacles before and during movement
+  if (commandChar == 'F') {
+    moveForward(value);
+  } else if (commandChar == 'B') {
+    moveBackward(value);
+  } else if (commandChar == 'L') {
+    turnLeft(value);
+  } else if (commandChar == 'R') {
+    turnRight(value);
+  }
+
+  delay(1000);
+  // Check for obstacles while moving
+  checkForObstacles();
+  delay(1000);
+}
+
+void checkForObstacles() {
+  int leftSensorValue = digitalRead(leftIR);
+  int rightSensorValue = digitalRead(rightIR);
+  Serial.print("Left IR Value: ");
+  Serial.print(leftSensorValue);
+  Serial.print(" | Right IR Value: ");
+  Serial.println(rightSensorValue);
+
+  if (leftSensorValue != HIGH) {             // Obstacle detected on the left
+    Serial.println("Obstacle detected on the left!");
+    moveRight(100);                          // Move slightly to the right
+  } else if (rightSensorValue != HIGH) {     // Obstacle detected on the right
+    Serial.println("Obstacle detected on the right!");
+    moveLeft(100);                           // Move slightly to the left
+  }
+}
+
+void checkServoPosition(Servo& servo, int servoNumber) {
+  int currentPos = servo.read();             // Get current position of servo
+  if (servoNumber == 1) {
+    if (currentPos != 0) {
+      Serial.println("Servo 1 is not at zero position, resetting to zero...");
+      servo.write(0);                        // Move to zero position if not already there
+      delay(1000);                           // Wait for servo to move
+    } else {
+      Serial.println("Servo 1 is already at zero position.");
+    }
+  } else if (servoNumber == 2) {
+    if (currentPos != 180) {
+      Serial.println("Servo 2 is not at zero position, resetting to zero...");
+      servo.write(180);                      // Move to inverted zero position if not already there
+      delay(1000);                           // Wait for servo to move
+    } else {
+      Serial.println("Servo 2 is already at zero position.");
+    }
+  }
+}
+
+void grab(int angle) {
+  Serial.println("Grabbing...");
+  servo1.write(angle);                       // Grab with servo 1
+  servo2.write(180 - angle);                 // Inverted grab with servo 2
+  delay(1000);                               // Wait for the servos to move
+  Serial.println("Grab complete.");
+  delay(2000);
+}
+
+void releaseServo(int angle) {
+  Serial.println("Releasing...");
+  servo1.write(0);                           // Release servo 1 to zero position
+  servo2.write(180);                         // Release servo 2 to its max (inverted zero)
+  delay(1000);                               // Wait for the servos to move
+  Serial.println("Release complete.");
+  delay(2000);
+}
+
+void moveForward(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);                           // Move forward for the specified duration
+  stopMotors();                              // Stop after moving forward
+}
+
+void moveBackward(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);                           // Move backward for the specified duration
+  stopMotors();
+}
+
+void turnLeft(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);                           // Turn left for the specified duration
+  stopMotors();                              // Stop after turning left
+}
+
+void turnRight(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);                           // Turn right for the specified duration
+  stopMotors();                              // Stop after turning right
+}
+
+void moveRight(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);                           // Move slightly to the right
+  stopMotors();                              // Stop after moving
+}
+
+void moveLeft(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);                           // Move slightly to the left
+  stopMotors();                              // Stop after moving
+}
+
+void stopMotors() {
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}

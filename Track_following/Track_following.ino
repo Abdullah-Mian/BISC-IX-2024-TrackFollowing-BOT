@@ -43,22 +43,22 @@ Command commands[] = {
   //{ 'F', 2461 },   // Move Forward
   
   /// Second PArt 
-  { 'F', 2472 },
-  // { 'L', 150 },
-  // { 'F', 1724 },
-  // { 'R', 186 },
-  // { 'F', 434 },
-  // { 'G', 80 },
-  // { 'B', 928 },
-  // { 'L', 612 },
-  // { 'F', 674 },
-  // { 'L', 360 },
-  // { 'F', 1308 },
-  // { 'R', 809 },
-  // { 'F', 2461 },
-  // { 'R', 722 },
-  // { 'F', 1619 },
-  // { 'S', 0 },
+  { 'F', 752 },
+  { 'R', 50 },
+  { 'F', 1724 },
+  { 'R', 186 },
+  { 'F', 434 },
+  { 'G', 80 },
+  { 'B', 928 },
+  { 'L', 612 },
+  { 'F', 674 },
+  { 'L', 360 },
+  { 'F', 1308 },
+  { 'R', 809 },
+  { 'F', 2461 },
+  { 'R', 722 },
+  { 'F', 1619 },
+  { 'S', 0 },
 };
 
 void setup() {
@@ -82,18 +82,18 @@ void setup() {
 void loop() {
   // Execute each command in the array
   delay(5000);
-  for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
-    executeCommand(commands[i].action, commands[i].value);
-    delay(1000);
-    checkForObstacles();
-    delay(1000);
-  }
+  // for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+  //   executeCommand(commands[i].action, commands[i].value);
+  //   delay(1000);
+  //   checkForObstacles();
+  //   delay(1000);
+  // }
 
-  // After executing all commands, stop the program
-  while (true) {
-    stopMotors();
-    delay(1000);
-  }
+  // // After executing all commands, stop the program
+  // while (true) {
+  //   stopMotors();
+  //   delay(1000);
+  // }
 
   checkForObstacles();
   delay(1000);

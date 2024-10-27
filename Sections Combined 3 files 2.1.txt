@@ -1,0 +1,419 @@
+// .ino.cpp
+#include <Servo.h>
+#include "functions.h"
+
+#define servo1Pin 6
+#define servo2Pin 9
+#define leftIR 7
+#define rightIR 8
+#define ledPin 2
+
+Servo servo1;
+Servo servo2;
+char CheckSkipObsticlecheck;
+// Define command array
+Command commands[] = {
+  // { 'F', 1655 },  // Move Forward
+  // { 'L', 777 },   // Turn Left
+  // { 'F', 1331 },  // Move Forward
+  // { 'R', 800 },   // Turn Right
+  // { 'F', 1195 },   // Move Forward
+  // { 'H', 200 },
+  // { 'R', 800 },   // Turn Right
+  // { 'H', 200 },
+  // { 'R', 800 },   // Turn Right
+  // { 'F', 1600 },  // Move Forward // long
+  // { 'R', 780 },   // Turn Right
+  // { 'F', 2517 },  // Move Forward
+  // { 'R', 750 },   // Turn Right
+  // { 'F', 1400 },  // Move Forward
+  // { 'R', 750 },   // Turn Right
+  // { 'H', 200 },
+  // { 'R', 750 },   // Turn Right
+  // { 'R', 750 },   // Turn Right
+  // { 'F', 1400 },  // Move Forward
+  // { 'L', 750 },   // Turn Right
+  // { 'C', 1552 },  // Rotate Clockwise
+  // { 'F', 3100 },  // Move Forward
+  // { 'H', 200 },
+  // { 'C', 1552 },  // Rotate Clockwise
+  // { 'F', 1550 },  // Move Forward
+  // { 'R', 750 },   // Turn Rightn
+  // { 'F', 3933 },  // Move Forward
+  //{ 'L', 750 },   // Turn Left
+  //{ 'F', 2461 },   // Move Forward
+
+  /// Second Part
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'F', 600 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'R', 150 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'G', 90 },
+  // { 'D', 000 },  // To make it skip obsticle scheck fro next step
+  // { 'B', 568 },
+  // //
+  // { 'L', 854 },
+  // { 'F', 1887 },
+  //
+  // { 'R', 716 },
+  // { 'F', 2238 },
+  // { 'R', 740 },
+  // { 'F', 1705 },
+  // { 'S', 0 },
+  // { 'R', 740 },
+  
+  // { 'B', 200 },
+  // { 'R', 805 },
+  // { 'F', 400 },
+  // { 'G', 90 },
+  // { 'B', 950 },
+  // { 'L', 805 },
+  // { 'F', 230 },
+  // { 'S', 0 },
+  // { 'B', 790 },
+
+  // { 'B', 1100 },
+  // { 'R', 771 },
+  // { 'F', 1882 },
+  // { 'L', 741 },
+  // { 'F', 420 },
+  // { 'G', 90 },
+  // { 'B', 420 },
+  // { 'L', 767 },
+  // { 'F', 1522 },
+  // { 'R', 684 },
+  // { 'F', 1764 }, 
+  // { 'S', 0 },
+  // { 'B', 1764 }, 
+
+  // { 'R', 771 },
+  // { 'F', 1582 },
+  // { 'L', 771 },
+  // { 'F', 940 },
+  // { 'G', 90 },
+  // { 'B', 950 },
+  // { 'L', 767 },
+  // { 'F', 1522 },
+  // { 'R', 684 },
+  // { 'F', 1864 }, 
+  // { 'S', 0 },
+  // { 'B', 2500 }, 
+  
+  /// Last Section
+  
+
+
+};
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(leftIR, INPUT);
+  pinMode(rightIR, INPUT);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(leftIR, LOW);
+  digitalWrite(rightIR, LOW);
+
+  servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+
+  checkServoPosition(servo1, 1);
+  checkServoPosition(servo2, 2);
+
+  digitalWrite(ledPin, LOW);
+}
+
+void loop() {
+  // Execute each command in the array
+  delay(5000);
+  bool skipNextObstacleCheck = false;
+
+  for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+    CheckSkipObsticlecheck = commands[i].action;
+    Serial.println(CheckSkipObsticlecheck);
+    executeCommand(commands[i].action, commands[i].value);
+    delay(1000);
+
+    if (CheckSkipObsticlecheck == 'D') {
+      skipNextObstacleCheck = true;
+      continue;
+    }
+    if (!skipNextObstacleCheck) {
+      checkForObstacles();
+    }
+    skipNextObstacleCheck = false;
+    delay(1000);
+  }
+
+  // After executing all commands, stop the program
+  while (true) {
+    stopMotors();
+    delay(10000);
+  }
+
+  // checkForObstacles();
+  // delay(1000);
+}
+
+// functions.h
+
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
+
+#include <Servo.h>
+
+// Struct for Command
+struct Command {
+  char action;
+  int value;
+};
+
+// Function prototypes
+void executeCommand(char commandChar, int value);
+void checkForObstacles();
+void checkServoPosition(Servo& servo, int servoNumber);
+void grab(int angle);
+void releaseServo(int angle);
+void HitForward(int duration);
+void HitBackward(int duration);
+void moveForward(int duration);
+void moveBackward(int duration);
+void turnLeft(int duration);
+void turnRight(int duration);
+void moveRight(int duration);
+void moveLeft(int duration);
+void rotateClockwise(int duration);
+void rotateAntiClockwise(int duration);
+void stopMotors();
+
+#endif
+
+
+// functions.cpp
+
+
+#include "functions.h"
+#include <Arduino.h>
+
+// Define motor pins, servo pins, IR pins, and other constants here, or use extern for variables from main
+#define motorA_forward 12
+#define motorA_backward 13
+#define motorB_forward 10
+#define motorB_backward 11
+#define leftIR 7
+#define rightIR 8
+#define ledPin 2
+
+#define StandardDealy 1000
+
+extern Servo servo1;
+extern Servo servo2;
+
+void executeCommand(char commandChar, int value) {
+  switch (commandChar) {
+    case 'G':
+      grab(value);
+      delay(StandardDealy);
+      break;
+    case 'S':
+      releaseServo(value);
+      delay(StandardDealy);
+      break;
+    case 'F':
+      moveForward(value);
+      delay(StandardDealy);
+      break;
+    case 'B':
+      moveBackward(value);
+      delay(StandardDealy);
+      break;
+
+    case 'L':
+      turnLeft(value);
+      delay(StandardDealy);
+      break;
+    case 'R':
+      turnRight(value);
+      delay(StandardDealy);
+      break;
+    case 'C':
+      rotateClockwise(value);
+      delay(StandardDealy);
+      break;
+    case 'A':
+      rotateAntiClockwise(value);
+      delay(StandardDealy);
+      break;
+    case 'H':
+      HitForward(value);
+      delay(StandardDealy);
+      break;
+    case 'J':
+      HitBackward(value);
+      delay(StandardDealy);
+      break;
+    default:
+      stopMotors();
+      delay(StandardDealy);
+      break;
+  }
+}
+
+
+
+void checkForObstacles() {
+    int leftSensorValue = digitalRead(leftIR);
+    int rightSensorValue = digitalRead(rightIR);
+    Serial.print("Left IR Value: ");
+    Serial.print(leftSensorValue);
+    Serial.print(" | Right IR Value: ");
+    Serial.println(rightSensorValue);
+
+    if (leftSensorValue != HIGH) {
+      Serial.println("Obstacle detected on the left!");
+      moveRight(100);
+      stopMotors();
+    } else if (rightSensorValue != HIGH) {
+      Serial.println("Obstacle detected on the right!");
+      moveLeft(100);
+      stopMotors();
+    }
+}
+
+void checkServoPosition(Servo& servo, int servoNumber) {
+  int currentPos = servo.read();
+  if (servoNumber == 1) {
+    if (currentPos != 0) {
+      Serial.println("Servo 1 is not at zero position, resetting to zero...");
+      servo.write(0);
+      delay(StandardDealy);
+    } else {
+      Serial.println("Servo 1 is already at zero position.");
+    }
+  } else if (servoNumber == 2) {
+    if (currentPos != 180) {
+      Serial.println("Servo 2 is not at zero position, resetting to zero...");
+      servo.write(180);
+      delay(StandardDealy);
+    } else {
+      Serial.println("Servo 2 is already at zero position.");
+    }
+  }
+}
+
+void grab(int angle) {
+  Serial.println("Grabbing...");
+  servo1.write(angle);
+  servo2.write(180 - angle);
+  delay(StandardDealy);
+  Serial.println("Grab complete.");
+  delay(2000);
+}
+
+void releaseServo(int angle) {
+  Serial.println("Releasing...");
+  servo1.write(0);
+  servo2.write(180);
+  delay(StandardDealy);
+  Serial.println("Release complete.");
+  delay(2000);
+}
+
+void HitForward(int duration) {
+  // if (!checkBlackDetection()) {
+  digitalWrite(ledPin, HIGH);
+  delay(StandardDealy);
+  digitalWrite(ledPin, LOW);
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Move forward for the specified duration
+  stopMotors();     // Stop after moving forward
+  delay(StandardDealy - 500);
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);  // Move backward for the specified duration
+  stopMotors();
+  // } else {
+  Serial.println("Hit Forward aborted: Black detected.");
+  // }
+}
+
+void HitBackward(int duration) {
+  // if (!checkBlackDetection()) {
+  analogWrite(motorA_backward, 170);
+  analogWrite(motorB_backward, 170);
+  delay(duration);  // Move backward for the specified duration
+  stopMotors();
+  delay(500);
+  analogWrite(motorA_forward, 170);
+  analogWrite(motorB_forward, 170);
+  delay(duration);  // Move forward for the specified duration
+  stopMotors();     // Stop after moving forward
+                    // } else {
+  Serial.println("Hit Backward aborted: Black detected.");
+  // }
+}
+
+void moveForward(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+void moveBackward(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+void turnLeft(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+void turnRight(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+void moveRight(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+void moveLeft(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+void rotateClockwise(int duration) {
+  digitalWrite(motorA_forward, HIGH);
+  digitalWrite(motorB_backward, HIGH);
+  delay(duration);  // Rotate clockwise for the specified duration
+  stopMotors();     // Stop after rotating clockwise
+}
+
+void rotateAntiClockwise(int duration) {
+  digitalWrite(motorA_backward, HIGH);
+  digitalWrite(motorB_forward, HIGH);
+  delay(duration);  // Rotate anti-clockwise for the specified duration
+  stopMotors();     // Stop after rotating anti-clockwise
+}
+
+void stopMotors() {
+  digitalWrite(motorA_forward, LOW);
+  digitalWrite(motorA_backward, LOW);
+  digitalWrite(motorB_forward, LOW);
+  digitalWrite(motorB_backward, LOW);
+}

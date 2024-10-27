@@ -35,8 +35,7 @@ void setup() {
   Serial.println("Both servos are at zero position.");
 
   // Colour Sensor LED
-  // digitalWrite(ledPin, LOW);
-  digitalWrite(ledPin, HIGH);
+  digitalWrite(ledPin, LOW);
 }
 
 void loop() {

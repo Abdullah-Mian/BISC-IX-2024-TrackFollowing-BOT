@@ -112,8 +112,8 @@ void checkServoPosition(Servo& servo, int servoNumber) {
 }
 void grab() {
   Serial.println("Grabbing...");
-  servo1.write(95);        // Grab with servo 1
-  servo2.write(180 - 95);  // Inverted grab with servo 2
+  servo1.write(120);        // Grab with servo 1
+  servo2.write(180 - 120);  // Inverted grab with servo 2
   Serial.println("Grab complete.");
   delay(2000);
 }

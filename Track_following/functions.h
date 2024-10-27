@@ -7,10 +7,17 @@
 struct Command {
   char action;
   int value;
+  char detectLine;
+
+  // Constructor to initialize detectLine as '\0' if not provided
+  Command(char a, int v, char d = '\0')
+    : action(a), value(v), detectLine(d) {}
 };
+
 
 // Function prototypes
 void executeCommand(char commandChar, int value);
+void followLine(char CurrentExecutingFunction);
 void checkForObstacles();
 void checkServoPosition(Servo& servo, int servoNumber);
 void grab(int angle);

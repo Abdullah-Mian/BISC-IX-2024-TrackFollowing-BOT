@@ -5,12 +5,13 @@
 #define servo2Pin 9
 #define leftIR 7
 #define rightIR 8
+#define lineFollower 4
 #define ledPin 2
 
 Servo servo1;
 Servo servo2;
-char CheckSkipObsticlecheck;
-// Define command array
+char CurrentExecutingFunction;
+
 Command commands[] = {
   // { 'F', 1655 },  // Move Forward
   // { 'L', 777 },   // Turn Left
@@ -61,7 +62,7 @@ Command commands[] = {
   // { 'F', 1705 },
   // { 'S', 0 },
   // { 'R', 740 },
-  
+
   // { 'B', 200 },
   // { 'R', 805 },
   // { 'F', 400 },
@@ -82,9 +83,9 @@ Command commands[] = {
   // { 'L', 767 },
   // { 'F', 1522 },
   // { 'R', 684 },
-  // { 'F', 1764 }, 
+  // { 'F', 1764 },
   // { 'S', 0 },
-  // { 'B', 1764 }, 
+  // { 'B', 1764 },
 
   // { 'R', 771 },
   // { 'F', 1582 },
@@ -95,14 +96,21 @@ Command commands[] = {
   // { 'L', 767 },
   // { 'F', 1522 },
   // { 'R', 684 },
-  // { 'F', 1864 }, 
+  // { 'F', 1864 },
   // { 'S', 0 },
-  // { 'B', 2500 }, 
-  
+  // { 'B', 2500 },
+
   /// Last Section
+  { 'B', 750 },
+  { 'R', 800 },
+  { 'F', 1546, 'A' },
+  //
+  { 'R', 367 },
+  { 'G', 120 },
+  { 'L', 400 },
+  { 'B', 3000, 'A' },
+
   
-
-
 };
 
 void setup() {
@@ -122,19 +130,71 @@ void setup() {
 
   digitalWrite(ledPin, LOW);
 }
-
 void loop() {
-  // Execute each command in the array
   delay(5000);
   bool skipNextObstacleCheck = false;
 
   for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
-    CheckSkipObsticlecheck = commands[i].action;
-    Serial.println(CheckSkipObsticlecheck);
-    executeCommand(commands[i].action, commands[i].value);
+    CurrentExecutingFunction = commands[i].action;
+
+    // If detectLine is not present, execute as usual
+    if (commands[i].detectLine == NULL) {
+      executeCommand(commands[i].action, commands[i].value);
+    }
+    // Handle commands with detectLine
+    else if (commands[i].detectLine != NULL) {
+      switch (commands[i].detectLine) {
+        case 'S':
+          {
+            // Monitor lineFollower and execute action until it goes LOW
+            unsigned long startTime = millis();
+            while ((millis() - startTime < commands[i].value) && digitalRead(lineFollower) == LOW) {
+              Serial.println("Executing command...");
+              unsigned long commandStartTime = millis();
+              executeCommand(commands[i].action, 100);  // Execute in 10 ms chunks
+              commands[i].value += 1000;
+              Serial.print("Command executed in: ");
+              Serial.println(millis() - commandStartTime);
+
+              delay(10);
+            }
+            if (digitalRead(lineFollower) == HIGH) {
+              Serial.println("Line detected, stopping execution.");
+            } else {
+              Serial.println("Completed execution without interruption.");
+            }
+            break;
+          }
+
+        case 'A':
+          {
+            unsigned long startTime = millis();
+
+            while (millis() - startTime < commands[i].value) {
+              Serial.print("Executing command: ");
+              Serial.print(commands[i].action);
+              Serial.print(" with value: ");
+              Serial.println(commands[i].value);
+              unsigned long commandStartTime = millis();
+              executeCommand(commands[i].action, 400);  // Execute in 10 ms chunks
+              commands[i].value += 1000;
+              if (digitalRead(lineFollower) == LOW) {
+                followLine(CurrentExecutingFunction);  // Call the line-following function
+                commands[i].value += 1400;
+              }
+              delay(10);
+            }
+            break;
+          }
+        default:
+          Serial.println("Unknown detectLine character");
+          break;
+      }
+    }
+
     delay(1000);
 
-    if (CheckSkipObsticlecheck == 'D') {
+    if (CurrentExecutingFunction == 'D') {
       skipNextObstacleCheck = true;
       continue;
     }
@@ -145,12 +205,8 @@ void loop() {
     delay(1000);
   }
 
-  // After executing all commands, stop the program
   while (true) {
     stopMotors();
     delay(10000);
   }
-
-  // checkForObstacles();
-  // delay(1000);
 }

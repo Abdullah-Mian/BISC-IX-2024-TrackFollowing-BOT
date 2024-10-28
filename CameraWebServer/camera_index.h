@@ -1,3 +1,4 @@
+
 #ifndef CAMERA_INDEX_H
 #define CAMERA_INDEX_H
 // OV2640 camera module pins (CAMERA_MODEL_AI_THINKER)
@@ -51,6 +52,32 @@ static size_t jpg_encode_stream(void *arg, size_t index, const void *data, size_
   return len;
 }
 
+// // Helper function to calculate color distance
+// int colorDistance(int r1, int g1, int b1, int r2, int g2, int b2) {
+//   return sqrt(pow(r1 - r2, 2) + pow(g1 - g2, 2) + pow(b1 - b2, 2));
+// }
+
+// Helper function to determine if a color is close to black
+bool isBlack(int r, int g, int b) {
+  const int BLACK_THRESHOLD = 50;  // Adjust this value as needed
+  return (r < BLACK_THRESHOLD && g < BLACK_THRESHOLD && b < BLACK_THRESHOLD);
+}
+
+// Helper function to determine if a color is close to yellow
+bool isYellow(int r, int g, int b) {
+  // Check if red and green are significantly higher than blue
+  if (r > b + 20 && g > b + 20) {
+    // Check if red and green are relatively close to each other
+    if (abs(r - g) < 50) {
+      // Additional check for very light yellows
+      if (r > 100 || g > 100) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void detectColor(camera_fb_t *fb) {
   if (!fb) return;
 
@@ -88,18 +115,18 @@ void detectColor(camera_fb_t *fb) {
 
   Serial.printf("Color range detected - R: %d, G: %d, B: %d\n", red_avg, green_avg, blue_avg);
 
-  if (red_avg > green_avg && red_avg > blue_avg) {
-    Serial.println("Dominant color: Red");
-  } else if (green_avg > red_avg && green_avg > blue_avg) {
-    Serial.println("Dominant color: Green");
-  } else if (blue_avg > red_avg && blue_avg > green_avg) {
-    Serial.println("Dominant color: Blue");
+  // Color detection logic
+  if (isBlack(red_avg, green_avg, blue_avg)) {
+    Serial.println("Dominant color: Black");
+  } else if (isYellow(red_avg, green_avg, blue_avg)) {
+    Serial.println("Dominant color: Yellow");
   } else {
-    Serial.println("No dominant color detected");
+    Serial.println("No dominant color detected (not close to Yellow or Black)");
   }
 
   free(rgb_buffer);
 }
+
 
 static esp_err_t capture_handler(httpd_req_t *req) {
   camera_fb_t *fb = NULL;
@@ -190,7 +217,7 @@ static esp_err_t stream_handler(httpd_req_t *req) {
     }
 
     // Add a small delay to slow down the stream and allow time for color detection output
-    delay(200);
+    // delay(200);
   }
 
   return res;
